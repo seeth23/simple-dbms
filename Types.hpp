@@ -27,6 +27,7 @@ enum Operations {
   add,
   deltbl,
   deldb,
+	delrec,
   showtbl,
   showdb,
   crttbl,

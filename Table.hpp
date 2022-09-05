@@ -2,6 +2,7 @@
 #define __TABLE_HPP__
 
 #include "Types.hpp"
+#include "Error.hpp"
 
 #include <vector>
 #include <map>
@@ -16,8 +17,8 @@ class Table {
 public:
   Table(std::map<std::string, ColumnType> cols, std::string table_name);  
   ~Table();
-  bool add_record(std::vector<std::string> values);
-  bool delete_record(int id);
+  bool add_record(size_t id, std::vector<std::string> values);
+  Result delete_record(size_t id);
   void show_records() const;
   int find_record_index(int id) const;
 

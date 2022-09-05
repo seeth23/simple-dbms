@@ -23,6 +23,7 @@ class LexicalAnalyzer {
   std::string m_name; // name of table or database
   std::vector<std::string> m_values; // values i.e. parameters
   std::map<std::string, ColumnType> m_table_signature;
+	size_t m_id;
   
 public:
   LexicalAnalyzer();
@@ -30,6 +31,7 @@ public:
   const std::string &name() const;
   const std::vector<std::string> &values() const;
   const std::map<std::string, ColumnType> &columns() const;
+	size_t id() const;
 };
 
 #endif

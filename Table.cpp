@@ -4,8 +4,6 @@
 #include <stdexcept>
 #include <string>
 
-static size_t id; // id is super-global variable for id in records, its related to all tables and probably databases.
-
 Table::Table(std::map<std::string, ColumnType> cols, std::string table_name)
 {
   for (const auto& [key, value] : cols) {
@@ -26,7 +24,7 @@ Table::~Table() {
   }
 }
 
-bool Table::add_record(std::vector<std::string> values) {
+bool Table::add_record(size_t id, std::vector<std::string> values) {
   Field **fields = new Field*[this->m_columns.size()];
   RecordData rd;
   for (size_t i = 0; i < this->m_columns.size(); i++) {
@@ -63,22 +61,20 @@ bool Table::add_record(std::vector<std::string> values) {
     delete fields[i];
   }
   delete []fields;
-
   m_records_number++;
   id++;
   return true;
 }
 
-bool Table::delete_record(int id) {
+Result Table::delete_record(size_t id) {
   int i = this->find_record_index(id);
   if (i == -1) {
-    std::cerr << "Record was not found" << std::endl;
-    return false;
+		return Result(false, record_not_found);
   }
   delete this->m_records[i];
   this->m_records.erase(this->m_records.begin()+i);
   this->m_records_number--;
-  return true;
+	return Result(true, none);
 }
 
 int Table::find_record_index(int id) const {
@@ -93,8 +89,7 @@ void Table::show_records() const {
   std::cout << "Records: " << this->m_records_number << std::endl;
   std::cout << "Columns: " << this->m_cols_number << std::endl;
   for (size_t i = 0; i < this->m_records_number; i++) {
-    std::cout << this->m_records[i]->id << std::endl;
-    
+    //std::cout << this->m_records[i]->id << std::endl;
     const auto t = this->m_records[i]->fields;
     for (size_t j = 0; j < this->m_cols_number; j++) {
       printf("id %d ", this->m_records[i]->id);

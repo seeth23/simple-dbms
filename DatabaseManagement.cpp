@@ -8,10 +8,10 @@
 DBMS::DBMS() {
   this->m_file_sys = new FileSys();
   this->m_parser = new Parser();
-  this->m_analyzer = new LexicalAnalyzer();
-  
+  this->m_analyzer = new LexicalAnalyzer(); 
   this->m_database_running = false;
   this->m_current_database = nullptr;
+	this->m_id = 0;
 }
 
 DBMS::~DBMS() {
@@ -45,10 +45,9 @@ Result DBMS::use_database(std::string database_name) {
 Result DBMS::add_record(std::string &table_name, std::vector<std::string> &vals) {
   Table *t = this->m_current_database->get_table(table_name);
   if (!t) return Result(false, table_not_found);
-  else {
-    bool r = t->add_record(vals);
-    if (!r) return Result(false, could_not_add_record);
-  }
+	bool r = t->add_record(this->m_id, vals);
+	if (!r) return Result(false, could_not_add_record);
+	this->m_id++;
   return Result(true, none);
 }
 
@@ -70,9 +69,22 @@ Result DBMS::delete_table(std::string table_name) {
 }
 
 Result DBMS::show_table(std::string table_name) {
-  if (this->m_current_database) this->m_current_database->show_table(table_name);
+  if (this->m_current_database) {
+    Result r = this->m_current_database->show_table(table_name);
+    if (!r.res) return r;
+  }
   else return Result(false, database_not_chosen);
   return Result(true, none);
+}
+
+Result DBMS::delete_record(std::string table_name, size_t id) {
+  if (this->m_current_database) {
+		Table *t = this->m_current_database->get_table(table_name);
+		if (!t) return Result(false, table_not_found);
+		Result r = t->delete_record(id);
+		if (!r.res) return r;
+	} else return Result(false, database_not_chosen);
+	return Result(true, none);
 }
 
 // TODO: think of how to format output. Should be the same for all the types, not chaotic.
@@ -80,7 +92,7 @@ Result DBMS::show_database(std::string database_name) {
   std::cout << "Databases" << std::endl;
   std::cout << "---------------------" << std::endl;
   for (auto db : this->m_databases) {
-    std::cout << "Name: " << db->name() << ", tables: " << (*db).table_number() << std::endl;
+    std::cout << "Name: " << db->name() << ", tables: " << (*db).tables_number() << std::endl;
   }
   return Result(true, none);
 }
@@ -105,7 +117,7 @@ void DBMS::input_handle() {
     if (commands.back() == "END") {
       Operations r = this->m_analyzer->parse_expression(commands);
       std::string name = this->m_analyzer->name();
-      auto values = this->m_analyzer->values(); 
+			std::vector<std::string> values = this->m_analyzer->values(); 
 
       Result res;
       switch (r) {
@@ -129,11 +141,18 @@ void DBMS::input_handle() {
         if (!res.res) throw res.error;
         std::cout << "deleted database '"+name+"'" << std::endl;
         break;
+			case delrec:
+				res = this->delete_record(name, this->m_analyzer->id());
+				if (!res.res) throw res.error;
+				std::cout << "deleted record '" << this->m_analyzer->id() << "'" << std::endl;
+				break;
       case showtbl:
         res = this->show_table(name); // TODO
+				if (!res.res) throw res.error;
         break;
       case showdb:
         res = this->show_database(name); // TODO
+				if (!res.res) throw res.error;
         break;
       case crttbl:
         res = this->create_table(name, this->m_analyzer->columns());
@@ -148,110 +167,7 @@ void DBMS::input_handle() {
       case undefined_operation: throw undefined_typ;
         break;
       }
-
-      /*switch (r) {
-        case use: {
-          int i = this->find_database_index(name);
-          if (i == -1) {
-            throw database_not_found;
-            //std::cerr << "Could not find database '"+name+"'" << std::endl;
-          } else {
-            this->m_current_database = this->m_databases[i];
-            std::cout << "Using database '"+name+"'" << std::endl;
-          }
-          break;
-        }
-        case add: {
-          Table *t = this->m_current_database->get_table(name);
-          if (!t) {
-            throw table_not_found;
-            //std::cerr << "Table not found: '"+name+"'" << std::endl;
-          } else {
-            bool r = t->add_record(values);
-            if (!r) {
-              throw could_not_add_record;
-              //std::cerr << "Could not add record" << std::endl;
-            }
-          }
-          break;
-        }
-        case deltbl: {
-          if (this->m_current_database) {
-            bool r = this->m_current_database->delete_table(name);
-            if (!r) {
-              throw could_not_delete_database;
-              //std::cerr << "Could not delete table '"+name+"'" << std::endl;
-            } else {
-              std::cout << "Successfully deleted table '"+name+"'" << std::endl;
-            }
-          } else {
-            throw database_not_chosen;
-            //std::cerr << "Current database is not chosen" << std::endl;
-          }
-          break;
-        }
-        case deldb: {
-          if (this->m_current_database) {
-            if (this->m_current_database->name() == name) {
-              //std::cerr << "Can't delete database: currently used" << std::endl;
-              throw could_not_delete_database;
-            }
-            bool r = this->delete_database(name);
-            if (!r) {
-              throw could_not_delete_database; // 
-            } else {
-              std::cout << "Successfully deleted database '"+name+"'" << std::endl;
-            }
-          } else {
-            throw could_not_delete_database;
-          }
-          //std::cerr << "Could not delete database '"+name+"'" << std::endl;
-          break;
-        }
-        case showtbl:
-          if (this->m_current_database) {
-            this->m_current_database->show_table(name);
-          } else 
-            throw database_not_chosen;
-          break;
-        case showdb:
-          this->show_database(name);
-          break;
-        case crttbl:  
-          // if current database in not nullptr
-          if (this->m_current_database) {
-            if (this->m_analyzer->columns().size() == 0) {
-              throw no_columns;
-              //std::cerr << "No cols" << std::endl;
-              //exit(0);
-            }
-            bool r = this->m_current_database->create_table(this->m_analyzer->columns(), name);
-            if (!r) {
-              throw could_not_create_table;
-              //std::cerr << "Could not create table '"+name+"'" << std::endl;
-            } else {
-              std::cout << "Successfully created table '"+name+"'"+" in database '"+name+"'" << std::endl;
-            }
-          }
-          else
-            throw database_not_chosen;
-            //std::cerr << "Database is not chosen" << std::endl;
-          break;
-        case crtdb:
-          if (this->create_database(name)) {
-            std::cout << "Successfully created database '"+name+"'" << std::endl;
-          } else {
-            throw could_not_create_database;
-            //std::cout << "Could not create database '"+name+"'" << std::endl;
-          }
-          break;
-        case undefined_operation:
-          //std::cerr << "Error: undefined type." << std::endl;
-          throw undefined_typ;
-          //break;
-      }*/
     } else throw wrong_syntax;
-    //throw std::invalid_argument("Wrong syntax");
   }
 
   if (std::cin.fail()) {
@@ -272,6 +188,7 @@ static std::string error_message(Errors e, std::string arg = "") {
   case database_not_chosen: return "Database not chosen"+arg;
   case database_not_found: return "Database not found"+arg;
   case table_not_found: return "Table not found"+arg;
+	case record_not_found: return "Record not found"+arg;
   case could_not_add_record: return "Could not add record"+arg;
   case could_not_delete_table: return "Could not delete table"+arg;
   case could_not_delete_database: return "Could not delete database"+arg;
@@ -292,7 +209,6 @@ start:
     while (m_database_running)
       input_handle();
   } catch (Errors err) {
-    // TODO
     switch (err) {
     case undefined_op:
     case undefined_typ:
@@ -301,6 +217,7 @@ start:
     case database_not_chosen:
     case database_not_found:
     case table_not_found:
+		case record_not_found:
     case could_not_add_record:
     case could_not_delete_table:
     case could_not_delete_database:

@@ -2,7 +2,7 @@
 #include "Error.hpp"
 #include "Types.hpp"
 
-LexicalAnalyzer::LexicalAnalyzer() {
+LexicalAnalyzer::LexicalAnalyzer(): m_id(0) {
 }
 
 const std::string &LexicalAnalyzer::name() const {
@@ -15,6 +15,10 @@ const std::vector<std::string> &LexicalAnalyzer::values() const {
 
 const std::map<std::string, ColumnType> &LexicalAnalyzer::columns() const {
   return this->m_table_signature;
+}
+
+size_t LexicalAnalyzer::id() const {
+	return this->m_id;
 }
 
 static bool IsKeyword(const std::string &key) {
@@ -40,6 +44,7 @@ static Operations command_type(std::string cmd)  {
   else if (cmd == "SHOWDB") return showdb;
   else if (cmd == "CRTTBL") return crttbl;
   else if (cmd == "CRTDB") return crtdb;
+	else if (cmd == "DELREC") return delrec;
   return undefined_operation;
 }
 
@@ -59,6 +64,10 @@ Operations LexicalAnalyzer::parse_expression(std::vector<std::string> tokens) {
       }
       break;
     /* all next N cases are the same: only table's or db's names matter */
+		case delrec:
+      if (IsKeyword(this->m_name)) throw keyword;
+			this->m_id = stoi(tokens[2]);
+			return operation;
     case use:
     case deldb:
     case deltbl:
@@ -73,9 +82,7 @@ Operations LexicalAnalyzer::parse_expression(std::vector<std::string> tokens) {
       for (size_t i = 2; i < tokens.size()-1; i++) {
         int delimeter_pos = tokens[i].find(':');
         std::string key = tokens[i].substr(0, delimeter_pos);
-
         if (IsKeyword(key)) throw keyword;
-
         std::string value = tokens[i].substr(delimeter_pos+1, tokens[i].length()-1);
         ColumnType col_type = column_type(value);
         if (col_type == undefined_type) {

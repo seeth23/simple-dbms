@@ -24,6 +24,8 @@ class DBMS {
   FileSys *m_file_sys;
   Parser *m_parser;
   LexicalAnalyzer *m_analyzer;
+
+	size_t m_id;
   
   void input_handle();
   int find_database_index(std::string db); // TODO: find database by name and attach it to *m_current_database;
@@ -41,7 +43,9 @@ class DBMS {
   Result create_database(std::string database_name);
   Result delete_database(std::string database_name);
 
-  //Result delete_database(std::string database_name);
+
+	// TODO: make delete_record from specific table in database methods
+	Result delete_record(std::string table_name, size_t id);
 public:
   void run();
   

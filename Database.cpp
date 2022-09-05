@@ -27,17 +27,16 @@ Result Database::create_table(std::map<std::string, ColumnType> cols, std::strin
 }
 
 // TODO: think of how to format output. Should be the same for all the types, not chaotic.
-void Database::show_table(std::string table_name) const {
-  for (auto t : this->m_tables) {
-    //std::cout << t->get_name() << ": " << std::endl;
-    t->show_records();
-  }
+Result Database::show_table(std::string table_name) const {
+  auto t = this->get_table(table_name);
+  if (!t) return Result(false, table_not_found);
+  t->show_records();
+  return Result(true, none);
 }
 
 Result Database::delete_table(std::string table_name) {
   int i = this->find_table_index(table_name);
   if (i == -1) {
-    //std::cerr << "Table was not found" << std::endl;
     return Result(false, table_not_found);
   }
   delete this->m_tables[i];
@@ -53,7 +52,7 @@ Table *Database::get_table(std::string table_name) const {
   return nullptr;
 }
 
-const int &Database::table_number() const {
+const int &Database::tables_number() const {
   return this->m_tables_number;
 }
 

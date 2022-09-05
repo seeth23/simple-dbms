@@ -14,6 +14,7 @@ enum Errors {
 
   database_not_found,
   table_not_found,
+	record_not_found,
 
   could_not_add_record,
 
