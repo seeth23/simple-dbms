@@ -9,8 +9,7 @@ static size_t id; // id is super-global variable for id in records, its related 
 Table::Table(std::map<std::string, ColumnType> cols, std::string table_name)
 {
   for (const auto& [key, value] : cols) {
-    if (value == undefined_type)
-      throw std::invalid_argument("Undefined column type '"+key+"'");
+    if (value == undefined_type) throw std::invalid_argument("Undefined column type '"+key+"'");
     this->m_columns.push_back(new Column(key, value));
   } 
   this->m_name = table_name;
@@ -30,43 +29,41 @@ Table::~Table() {
 bool Table::add_record(std::vector<std::string> values) {
   Field **fields = new Field*[this->m_columns.size()];
   RecordData rd;
-  std::cout << "values[0]: " << values[0] << std::endl;
   for (size_t i = 0; i < this->m_columns.size(); i++) {
     ColumnType ct = this->m_columns[i]->column_type;
     switch (ct) {
-    case text:
-      rd.str = (char*)malloc(sizeof(char)*values[i].length());
-      if (!rd.str) {
-        std::cerr << "Failed to alloc mem for rd.str" << std::endl;
-        exit(1);
-      }
-      strcpy(rd.str, values[i].c_str());
-      fields[i] = new Field(ct, rd);
-      break;
-    case number:
-      rd.num = std::stoi(values[i]);
-      fields[i] = new Field(ct, rd);
-      break;
-    case money:
-      rd.money = std::stod(values[i]);
-      fields[i] = new Field(ct, rd);
-      break;
-    case date:
-      rd.date = Date(1, 1, 1996);
-      fields[i] = new Field(ct, rd);
-      break;
-    case undefined_type:
-      throw std::invalid_argument("Error: undefined type.");
-      break;
+      case text:
+        rd.str = (char*)malloc(sizeof(char)*values[i].length());
+        if (!rd.str) {
+          std::cerr << "Failed to alloc mem for rd.str" << std::endl;
+          exit(1);
+        }
+        strcpy(rd.str, values[i].c_str());
+        fields[i] = new Field(ct, rd);
+        break;
+      case number:
+        rd.num = std::stoi(values[i]);
+        fields[i] = new Field(ct, rd);
+        break;
+      case money:
+        rd.money = std::stod(values[i]);
+        fields[i] = new Field(ct, rd);
+        break;
+      case date:
+        rd.date = Date(1, 1, 1996);
+        fields[i] = new Field(ct, rd);
+        break;
+      case undefined_type:
+        throw std::invalid_argument("Error: undefined type.");
+        break;
     }
   }
   this->m_records.push_back(new Record(id, fields, this->m_columns.size()));
-
   for (size_t i = 0; i < this->m_columns.size(); i++) {
     delete fields[i];
   }
-  delete [] fields;
-  
+  delete []fields;
+
   m_records_number++;
   id++;
   return true;

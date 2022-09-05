@@ -6,7 +6,7 @@ src=FileSys.cpp \
 		Table.cpp \
 		main.cpp \
 
-flags = -Wall -g
+flags = -Wall -g -std=c++17
 
 all:
 	g++ $(flags) $(src) -o main

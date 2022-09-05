@@ -15,7 +15,9 @@
 //#define KEYWORDS_SIZE 1
 
 const std::set<std::string> ILLEGAL_SYMBOLS = {",", "(", ")", "{", "}", "!", "@", "+", "=", "#", "$", "%", "^", "&", "*", "\"", "'"};
-const std::string KEYWORDS[] = {"ALL"};
+const std::string KEYWORDS[] = {"ALL", "END", "USE", "ADD", "DELTBL", "DELDB", "SHOWTBL", "SHOWDB", "CRTTBL", "CRTDB", "TEXT", "NUMBER", "MONEY", "DATE"};
+const size_t keywords_size = sizeof(KEYWORDS)/sizeof(KEYWORDS[0]);
+
 
 class LexicalAnalyzer {
   std::string m_name; // name of table or database
@@ -25,9 +27,9 @@ class LexicalAnalyzer {
 public:
   LexicalAnalyzer();
   Operations parse_expression(std::vector<std::string> tokens);
-  const std::string &get_name() const;
-  const std::vector<std::string> &get_values() const;
-  const std::map<std::string, ColumnType> &get_columns() const;
+  const std::string &name() const;
+  const std::vector<std::string> &values() const;
+  const std::map<std::string, ColumnType> &columns() const;
 };
 
 #endif
