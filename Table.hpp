@@ -8,23 +8,23 @@
 #include <map>
 
 class Table {
-  std::vector<Record*> m_records;
-  std::vector<Column*> m_columns;
-  size_t m_cols_number;
-  size_t m_records_number;
+	std::vector<Record*> m_records;
+	std::vector<Column*> m_columns;
+	size_t m_cols_number;
+	size_t m_records_number;
 
-  std::string m_name;
+	std::string m_name;
 public:
-  Table(std::map<std::string, ColumnType> cols, std::string table_name);  
-  ~Table();
-  bool add_record(size_t id, std::vector<std::string> values);
-  Result delete_record(size_t id);
-  void show_records() const;
-  int find_record_index(int id) const;
+	Table(std::map<std::string, ColumnType> cols, std::string table_name);  
+	~Table();
+	bool add_record(size_t id, std::vector<std::string> values);
+	Result delete_record(size_t id);
+	void show_records() const;
+	int find_record_index(int id) const;
 
-  const std::string &get_name() const;
-  int get_cols_number() const;
-  int get_records_number() const;
+	const std::string &get_name() const;
+	int get_cols_number() const;
+	int get_records_number() const;
 };
 
 

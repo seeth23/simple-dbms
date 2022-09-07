@@ -4,30 +4,33 @@
 #include "Types.hpp"
 
 enum Errors {
-  undefined_op,
-  undefined_typ,
-  invalid_token,
-  wrong_syntax,
-  keyword,
+	undefined_op,
+	undefined_typ,
+	invalid_token,
+	wrong_syntax,
+	keyword,
 
-  database_not_chosen,
+	database_not_chosen,
 
-  database_not_found,
-  table_not_found,
+	database_not_found,
+	table_not_found,
 	record_not_found,
 
-  could_not_add_record,
+	database_exists,
+	table_exists,
 
-  could_not_delete_table,
-  could_not_delete_database,
-  could_not_create_table,
-  could_not_create_database,
+	could_not_add_record,
 
-  no_columns,
+	could_not_delete_table,
+	could_not_delete_database,
+	could_not_create_table,
+	could_not_create_database,
 
-  zero_length_name,
+	no_columns,
 
-  none,
+	zero_length_name,
+
+	none,
 };
 
 struct Result {

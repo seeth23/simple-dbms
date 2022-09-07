@@ -17,40 +17,40 @@
 #include <map>
 
 class DBMS {
-  bool m_database_running;
-  Database *m_current_database;
-  std::vector<Database*> m_databases;
+	bool m_database_running;
+	Database *m_current_database;
+	std::vector<Database*> m_databases;
 
-  FileSys *m_file_sys;
-  Parser *m_parser;
-  LexicalAnalyzer *m_analyzer;
+	FileSys *m_file_sys;
+	Parser *m_parser;
+	LexicalAnalyzer *m_analyzer;
 
 	size_t m_id;
-  
-  void input_handle();
-  int find_database_index(std::string db); // TODO: find database by name and attach it to *m_current_database;
-  //bool open_database(std::string database_name);
-  
-  
-  Result show_database(std::string database_name);
-  Result show_table(std::string table_name);
+	
+	void input_handle();
+	int find_database_index(std::string db); // TODO: find database by name and attach it to *m_current_database;
+	//bool open_database(std::string database_name);
+	
+	
+	Result show_database(std::string database_name);
+	Result show_table(std::string table_name);
 
 
-  Result add_record(std::string &table_name, std::vector<std::string> &vals);
-  Result use_database(std::string database_name);
-  Result delete_table(std::string table_name);
-  Result create_table(std::string table_name, const std::map<std::string, ColumnType> &columns);
-  Result create_database(std::string database_name);
-  Result delete_database(std::string database_name);
+	Result add_record(std::string &table_name, std::vector<std::string> &vals);
+	Result use_database(std::string database_name);
+	Result delete_table(std::string table_name);
+	Result create_table(std::string table_name, const std::map<std::string, ColumnType> &columns);
+	Result create_database(std::string database_name);
+	Result delete_database(std::string database_name);
 
 
 	// TODO: make delete_record from specific table in database methods
 	Result delete_record(std::string table_name, size_t id);
 public:
-  void run();
-  
-  DBMS();
-  ~DBMS();
+	void run();
+	
+	DBMS();
+	~DBMS();
 };
 
 

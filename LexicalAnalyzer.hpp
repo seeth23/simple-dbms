@@ -20,17 +20,17 @@ const size_t keywords_size = sizeof(KEYWORDS)/sizeof(KEYWORDS[0]);
 
 
 class LexicalAnalyzer {
-  std::string m_name; // name of table or database
-  std::vector<std::string> m_values; // values i.e. parameters
-  std::map<std::string, ColumnType> m_table_signature;
+	std::string m_name; // name of table or database
+	std::vector<std::string> m_values; // values i.e. parameters
+	std::map<std::string, ColumnType> m_table_signature;
 	size_t m_id;
-  
+	
 public:
-  LexicalAnalyzer();
-  Operations parse_expression(std::vector<std::string> tokens);
-  const std::string &name() const;
-  const std::vector<std::string> &values() const;
-  const std::map<std::string, ColumnType> &columns() const;
+	LexicalAnalyzer();
+	Operations parse_expression(std::vector<std::string> tokens);
+	const std::string &name() const;
+	const std::vector<std::string> &values() const;
+	const std::map<std::string, ColumnType> &columns() const;
 	size_t id() const;
 };
 
