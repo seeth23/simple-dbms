@@ -29,12 +29,9 @@ class DBMS {
 	
 	void input_handle();
 	int find_database_index(std::string db); // TODO: find database by name and attach it to *m_current_database;
-	//bool open_database(std::string database_name);
 	
-	
-	Result show_database(std::string database_name);
-	Result show_table(std::string table_name);
-
+	Result show_database(std::string database_name) const;
+	Result show_table(std::string table_name) const;
 
 	Result add_record(std::string &table_name, std::vector<std::string> &vals);
 	Result use_database(std::string database_name);
@@ -42,9 +39,6 @@ class DBMS {
 	Result create_table(std::string table_name, const std::map<std::string, ColumnType> &columns);
 	Result create_database(std::string database_name);
 	Result delete_database(std::string database_name);
-
-
-	// TODO: make delete_record from specific table in database methods
 	Result delete_record(std::string table_name, size_t id);
 public:
 	void run();

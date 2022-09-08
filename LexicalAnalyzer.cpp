@@ -76,7 +76,7 @@ Operations LexicalAnalyzer::parse_expression(std::vector<std::string> tokens) {
 			if (IsKeyword(this->m_name)) throw keyword;
 			return operation;
 		case crttbl: /* parse key:value to create table. */
-			this->m_name = tokens[1];
+			//this->m_name = tokens[1];
 			this->m_table_signature.clear();
 			for (size_t i = 2; i < tokens.size()-1; i++) {
 				int delimeter_pos = tokens[i].find(':');

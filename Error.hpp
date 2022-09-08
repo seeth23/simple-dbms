@@ -30,6 +30,8 @@ enum Errors {
 
 	zero_length_name,
 
+	wrong_date_format,
+
 	none,
 };
 

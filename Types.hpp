@@ -16,9 +16,8 @@ struct Date {
 	Date(): day(0), month(0), year(0) {}
 	Date(size_t d, size_t m, size_t y) : day(d), month(m), year(y) {}
 	Date(const Date &d) { day = d.day; month = d.month; year = d.year; }
-
 	std::string Display() const {
-		return "01/01/1996";
+		return std::to_string(day)+"/"+std::to_string(month)+"/"+std::to_string(year);
 	}
 };
 
@@ -58,7 +57,6 @@ union RecordData {
 	int num;
 	double money;
 	Date date;
-
 	RecordData(): num(0) {}  
 };
 

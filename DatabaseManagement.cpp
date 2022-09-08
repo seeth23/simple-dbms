@@ -46,8 +46,8 @@ Result DBMS::use_database(std::string database_name) {
 Result DBMS::add_record(std::string &table_name, std::vector<std::string> &vals) {
 	Table *t = this->m_current_database->get_table(table_name);
 	if (!t) return Result(false, table_not_found);
-	bool r = t->add_record(this->m_id, vals);
-	if (!r) return Result(false, could_not_add_record);
+	Result r = t->add_record(this->m_id, vals);
+	if (!r.res) return r;
 	this->m_id++;
 	return Result(true, none);
 }
@@ -55,7 +55,8 @@ Result DBMS::add_record(std::string &table_name, std::vector<std::string> &vals)
 Result DBMS::create_table(std::string table_name, const std::map<std::string, ColumnType> &columns) {
 	if (this->m_current_database) {
 		if (this->m_analyzer->columns().size() == 0) return Result(false, zero_length_name);
-		if (this->m_current_database->get_table(table_name)) return Result(false, table_exists); // if not nullptr then table already exists
+		// if not nullptr then table already exists
+		if (this->m_current_database->get_table(table_name)) return Result(false, table_exists); 
 		Result r = this->m_current_database->create_table(this->m_analyzer->columns(), table_name);
 		if (!r.res) return r;
 	} else return Result(false, database_not_chosen);
@@ -70,7 +71,7 @@ Result DBMS::delete_table(std::string table_name) {
 	return Result(true, none);
 }
 
-Result DBMS::show_table(std::string table_name) {
+Result DBMS::show_table(std::string table_name) const {
 	if (this->m_current_database) {
 		Result r = this->m_current_database->show_table(table_name);
 		if (!r.res) return r;
@@ -89,13 +90,13 @@ Result DBMS::delete_record(std::string table_name, size_t id) {
 	return Result(true, none);
 }
 
-// TODO: think of how to format output. Should be the same for all the types, not chaotic.
-Result DBMS::show_database(std::string database_name) {
-	std::cout << "Databases" << std::endl;
-	std::cout << "---------------------" << std::endl;
+Result DBMS::show_database(std::string database_name) const {
+	std::cout << "databases" << std::endl;
+	std::cout << "-----------------------" << std::endl;
 	for (auto db : this->m_databases) {
-		std::cout << "Name: " << db->name() << ", tables: " << (*db).tables_number() << std::endl;
+		std::cout << "name: " << db->name() << ";tables: " << (*db).tables_number() << std::endl;
 	}
+	std::cout << "-----------------------" << std::endl;
 	return Result(true, none);
 }
 
@@ -148,11 +149,11 @@ void DBMS::input_handle() {
 				std::cout << "deleted record '" << this->m_analyzer->id() << "'" << std::endl;
 				break;
 			case showtbl:
-				res = this->show_table(name); // TODO
+				res = this->show_table(name);
 				if (!res.res) throw res.error;
 				break;
 			case showdb:
-				res = this->show_database(name); // TODO
+				res = this->show_database(name);
 				if (!res.res) throw res.error;
 				break;
 			case crttbl:
@@ -181,26 +182,27 @@ void DBMS::input_handle() {
 
 static std::string error_message(Errors e, std::string arg = "") {
 	switch (e) {
-	case undefined_op: return "Undefined operation"+arg;
-	case undefined_typ: return "Undefined type"+arg;
-	case invalid_token: return "Invalid token"+arg;
-	case wrong_syntax: return "Wrong syntax"+arg;
-	case keyword: return "Use of keyword"+arg;
-	case database_not_chosen: return "Database not chosen"+arg;
-	case database_not_found: return "Database not found"+arg;
-	case table_not_found: return "Table not found"+arg;
-	case record_not_found: return "Record not found"+arg;
-	case could_not_add_record: return "Could not add record"+arg;
-	case could_not_delete_table: return "Could not delete table"+arg;
-	case could_not_delete_database: return "Could not delete database"+arg;
-	case could_not_create_table: return "Could not create table"+arg;
-	case could_not_create_database: return "Could not create database"+arg;
-	case no_columns: return "No columns were provided"+arg;
-	case zero_length_name: return "Name cannot be zero"+arg;
-	case table_exists: return "Table already exists"+arg;
-	case database_exists: return "Database already exists"+arg;
-	case none:
-		break;
+		case undefined_op: return "undefined operation"+arg;
+		case undefined_typ: return "undefined type"+arg;
+		case invalid_token: return "invalid token"+arg;
+		case wrong_syntax: return "wrong syntax"+arg;
+		case keyword: return "use of keyword"+arg;
+		case database_not_chosen: return "database not chosen"+arg;
+		case database_not_found: return "database not found"+arg;
+		case table_not_found: return "table not found"+arg;
+		case record_not_found: return "record not found"+arg;
+		case could_not_add_record: return "could not add record"+arg;
+		case could_not_delete_table: return "could not delete table"+arg;
+		case could_not_delete_database: return "could not delete database"+arg;
+		case could_not_create_table: return "could not create table"+arg;
+		case could_not_create_database: return "could not create database"+arg;
+		case no_columns: return "no columns were provided"+arg;
+		case zero_length_name: return "name cannot be zero"+arg;
+		case table_exists: return "table already exists"+arg;
+		case database_exists: return "database already exists"+arg;
+		case wrong_date_format: return "wrong date format"+arg;
+		case none:
+			break;
 	}
 	return "";
 }
@@ -213,29 +215,33 @@ start:
 			input_handle();
 	} catch (Errors err) {
 		switch (err) {
-		case undefined_op:
-		case undefined_typ:
-		case invalid_token:
-		case wrong_syntax:
-		case database_not_chosen:
-		case database_not_found:
-		case table_not_found:
-		case record_not_found:
-		case could_not_add_record:
-		case could_not_delete_table:
-		case could_not_delete_database:
-		case could_not_create_table:
-		case could_not_create_database:
-		case no_columns:
-		case zero_length_name:
-		case keyword:
-		case table_exists:
-		case database_exists:
-			std::cout << "Error: " << error_message(err) << std::endl;
-			goto start;
-		case none:
-			goto start;
-			break;
+			case undefined_op:
+			case undefined_typ:
+			case invalid_token:
+			case wrong_syntax:
+			case database_not_chosen:
+			case database_not_found:
+			case table_not_found:
+			case record_not_found:
+			case could_not_add_record:
+			case could_not_delete_table:
+			case could_not_delete_database:
+			case could_not_create_table:
+			case could_not_create_database:
+			case no_columns:
+			case zero_length_name:
+			case keyword:
+			case table_exists:
+			case database_exists:
+			case wrong_date_format:
+				std::cout << "Error: " << error_message(err) << std::endl;
+				goto start;
+			case none:
+				goto start;
+				break;
 		}
+	}
+	catch (...) {
+		std::cout << "Some unusual catch up" << std::endl;
 	}
 }

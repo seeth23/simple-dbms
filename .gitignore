@@ -1,5 +1,4 @@
 documentation
 *.file
-main.cpp
 main
 gcm.cache/*

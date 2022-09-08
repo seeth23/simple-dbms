@@ -24,7 +24,22 @@ Table::~Table() {
 	}
 }
 
-bool Table::add_record(size_t id, std::vector<std::string> values) {
+static Result parse_date(std::string date, int *d, int *m, int *y) {
+	int day = (date[0]-48)*10+date[1]-48;
+	int month = (date[3]-48)*10+date[4]-48;
+	int year = (((date[6]-48)*10+(date[7]-48))*10+(date[8]-48))*10+(date[9]-48);
+
+	if (date[2] != '/' || date[5] != '/')
+		return Result(false, wrong_date_format);
+	if ((day < 1 || day > 31) || (month < 1 || month > 12) || (year < 0 || year > INT32_MAX))
+		return Result(false, wrong_date_format);
+
+	*d = day; *m = month; *y = year;
+
+	return Result(true, none);
+}
+
+Result Table::add_record(size_t id, std::vector<std::string> values) {
 	Field **fields = new Field*[this->m_columns.size()];
 	RecordData rd;
 	for (size_t i = 0; i < this->m_columns.size(); i++) {
@@ -47,23 +62,27 @@ bool Table::add_record(size_t id, std::vector<std::string> values) {
 				rd.money = std::stod(values[i]);
 				fields[i] = new Field(ct, rd);
 				break;
-			case date:
-				rd.date = Date(1, 1, 1996);
+			case date: {
+				int d, m, y;
+				Result r = parse_date(values[i], &d, &m, &y);
+				if (!r.res) return r;
+				rd.date = Date(d, m, y);
 				fields[i] = new Field(ct, rd);
 				break;
+			 }
 			case undefined_type:
-				throw std::invalid_argument("Error: undefined type.");
-				break;
+				return Result(false, undefined_typ);
 		}
 	}
 	this->m_records.push_back(new Record(id, fields, this->m_columns.size()));
+
 	for (size_t i = 0; i < this->m_columns.size(); i++) {
 		delete fields[i];
 	}
 	delete []fields;
+
 	m_records_number++;
-	id++;
-	return true;
+	return Result(true, none);
 }
 
 Result Table::delete_record(size_t id) {
@@ -84,33 +103,50 @@ int Table::find_record_index(int id) const {
 	return -1;
 }
 
-// TODO: think of how to format output. Should be the same for all the types, not chaotic.
+static std::string colttos(ColumnType ct) {
+	switch (ct) {
+		case text: return "TEXT";
+		case number: return "NUMBER";
+		case date: return "DATE";
+		case money: return "MONEY";
+		case undefined_type: throw undefined_typ;
+	}
+	return "";
+}
+
 void Table::show_records() const {
-	std::cout << "Records: " << this->m_records_number << std::endl;
-	std::cout << "Columns: " << this->m_cols_number << std::endl;
+	std::cout << "---------------------------------------------------------------------------" << std::endl;
+	std::cout << "records: " << this->m_records_number << "; columns: " << this->m_cols_number << std::endl;
+	std::cout << "---------------------------------------------------------------------------" << std::endl;
+	std::cout << "ID | ";
+	for (size_t i = 0; i < this->m_columns.size(); i++) {
+		std::cout << this->m_columns[i]->column_name << ":" << colttos(this->m_columns[i]->column_type) << " | ";
+	}
+	std::cout << std::endl;
 	for (size_t i = 0; i < this->m_records_number; i++) {
-		//std::cout << this->m_records[i]->id << std::endl;
 		const auto t = this->m_records[i]->fields;
+		printf("%d\t|\t", this->m_records[i]->id);
 		for (size_t j = 0; j < this->m_cols_number; j++) {
-			printf("id %d ", this->m_records[i]->id);
 			switch (t[j]->type) {
-			case text:
-				printf("value %s\n", t[j]->data.str);
-				break;
-			case number:
-				printf("value %d\n", t[j]->data.num);
-				break;
-			case money:
-				printf("value %f\n", t[j]->data.money);
-				break;
-			case date:
-				printf("value %s\n", t[j]->data.date.Display().c_str());
-				break;
-			case undefined_type:
-				break;
+				case text:
+					printf("%s\t|\t", t[j]->data.str);
+					break;
+				case number:
+					printf("%d\t|\t", t[j]->data.num);
+					break;
+				case money:
+					printf("%f\t|\t", t[j]->data.money);
+					break;
+				case date:
+					printf("%s\t|\t", t[j]->data.date.Display().c_str());
+					break;
+				case undefined_type:
+					break;
 			}
 		}
+		std::cout << std::endl;
 	}
+	std::cout << "---------------------------------------------------------------------------" << std::endl;
 }
 
 const std::string &Table::get_name() const {
