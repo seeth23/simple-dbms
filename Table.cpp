@@ -31,11 +31,11 @@ static Result parse_date(std::string date, int *d, int *m, int *y) {
 
 	if (date[2] != '/' || date[5] != '/')
 		return Result(false, wrong_date_format);
+
 	if ((day < 1 || day > 31) || (month < 1 || month > 12) || (year < 0 || year > INT32_MAX))
 		return Result(false, wrong_date_format);
 
 	*d = day; *m = month; *y = year;
-
 	return Result(true, none);
 }
 
@@ -55,12 +55,24 @@ Result Table::add_record(size_t id, std::vector<std::string> values) {
 				fields[i] = new Field(ct, rd);
 				break;
 			case number:
-				rd.num = std::stoi(values[i]);
-				fields[i] = new Field(ct, rd);
+				try {
+					rd.num = std::stoi(values[i]);
+					fields[i] = new Field(ct, rd);
+				} catch (std::invalid_argument const &ex) {
+					std::cout << "Error: " << ex.what() << " - conversion exception. Wrong argument" << std::endl; ;
+					delete []fields;
+					return Result(false, wrong_syntax);
+				}
 				break;
 			case money:
-				rd.money = std::stod(values[i]);
-				fields[i] = new Field(ct, rd);
+				try {
+					rd.money = std::stod(values[i]);
+					fields[i] = new Field(ct, rd);
+				} catch (std::invalid_argument const &ex) {
+					std::cout << "Error: " << ex.what() << " - conversion exception. Wrong argument" << std::endl; ;
+					delete []fields;
+					return Result(false, wrong_syntax);
+				}
 				break;
 			case date: {
 				int d, m, y;

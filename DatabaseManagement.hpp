@@ -28,7 +28,7 @@ class DBMS {
 	size_t m_id;
 	
 	void input_handle();
-	int find_database_index(std::string db); // TODO: find database by name and attach it to *m_current_database;
+	int find_database_index(std::string db) const;
 	
 	Result show_database(std::string database_name) const;
 	Result show_table(std::string table_name) const;

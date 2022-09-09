@@ -31,6 +31,7 @@ enum Errors {
 	zero_length_name,
 
 	wrong_date_format,
+	illegal_name,
 
 	none,
 };
@@ -41,18 +42,6 @@ struct Result {
   Result(bool r, Errors e) : res(r), error(e) {}
   Result(): res(false) {}
 };
-
-/*template<typename T>
-union Maybe {
-  Errors error;
-  T result;
-};
-
-template<typename T>
-struct Result {
-  Maybe<T> result;
-  bool stat;
-};*/
 
 #endif
 

@@ -9,6 +9,7 @@ DBMS::DBMS() {
 	this->m_file_sys = new FileSys();
 	this->m_parser = new Parser();
 	this->m_analyzer = new LexicalAnalyzer(); 
+
 	this->m_database_running = false;
 	this->m_current_database = nullptr;
 	this->m_id = 0;
@@ -44,6 +45,7 @@ Result DBMS::use_database(std::string database_name) {
 }
 
 Result DBMS::add_record(std::string &table_name, std::vector<std::string> &vals) {
+	if (!this->m_current_database) return Result(false, database_not_chosen);
 	Table *t = this->m_current_database->get_table(table_name);
 	if (!t) return Result(false, table_not_found);
 	Result r = t->add_record(this->m_id, vals);
@@ -71,7 +73,7 @@ Result DBMS::delete_table(std::string table_name) {
 	return Result(true, none);
 }
 
-Result DBMS::show_table(std::string table_name) const {
+Result DBMS::show_table(std::string table_name = "") const {
 	if (this->m_current_database) {
 		Result r = this->m_current_database->show_table(table_name);
 		if (!r.res) return r;
@@ -90,17 +92,28 @@ Result DBMS::delete_record(std::string table_name, size_t id) {
 	return Result(true, none);
 }
 
-Result DBMS::show_database(std::string database_name) const {
-	std::cout << "databases" << std::endl;
+Result DBMS::show_database(std::string database_name = "") const {
 	std::cout << "-----------------------" << std::endl;
-	for (auto db : this->m_databases) {
-		std::cout << "name: " << db->name() << ";tables: " << (*db).tables_number() << std::endl;
+	if (!database_name.length()) {
+		for (auto db : this->m_databases) {
+			std::cout 
+				<< "name: " << db->name() 
+				<< ";tables: " << db->tables_number() 
+			<< std::endl;
+		}
+	} else {
+		int i = find_database_index(database_name);
+		if (i == -1) return Result(false, database_not_found);
+		std::cout 
+			<< "name: " << this->m_databases[i]->name() 
+			<< ";tables: " << this->m_databases[i]->tables_number() 
+		<< std::endl;
 	}
 	std::cout << "-----------------------" << std::endl;
 	return Result(true, none);
 }
 
-int DBMS::find_database_index(std::string database_name) {
+int DBMS::find_database_index(std::string database_name) const {
 	for (size_t i = 0; i < this->m_databases.size(); i++) {
 		if (this->m_databases[i]->name() == database_name) return i;
 	}
@@ -173,7 +186,7 @@ void DBMS::input_handle() {
 	}
 
 	if (std::cin.fail()) {
-		std::cout << "EOF reached." << std::endl;
+		//std::cout << "EOF reached." << std::endl;
 		clearerr(stdin);
 		std::cin.clear();
 		this->m_database_running = false;
@@ -182,27 +195,28 @@ void DBMS::input_handle() {
 
 static std::string error_message(Errors e, std::string arg = "") {
 	switch (e) {
-		case undefined_op: return "undefined operation"+arg;
-		case undefined_typ: return "undefined type"+arg;
-		case invalid_token: return "invalid token"+arg;
-		case wrong_syntax: return "wrong syntax"+arg;
-		case keyword: return "use of keyword"+arg;
-		case database_not_chosen: return "database not chosen"+arg;
-		case database_not_found: return "database not found"+arg;
-		case table_not_found: return "table not found"+arg;
-		case record_not_found: return "record not found"+arg;
-		case could_not_add_record: return "could not add record"+arg;
-		case could_not_delete_table: return "could not delete table"+arg;
-		case could_not_delete_database: return "could not delete database"+arg;
-		case could_not_create_table: return "could not create table"+arg;
-		case could_not_create_database: return "could not create database"+arg;
-		case no_columns: return "no columns were provided"+arg;
-		case zero_length_name: return "name cannot be zero"+arg;
-		case table_exists: return "table already exists"+arg;
-		case database_exists: return "database already exists"+arg;
-		case wrong_date_format: return "wrong date format"+arg;
-		case none:
-			break;
+	case undefined_op: return "undefined operation"+arg;
+	case undefined_typ: return "undefined type"+arg;
+	case invalid_token: return "invalid token"+arg;
+	case wrong_syntax: return "wrong syntax"+arg;
+	case keyword: return "use of keyword"+arg;
+	case database_not_chosen: return "database not chosen"+arg;
+	case database_not_found: return "database not found"+arg;
+	case table_not_found: return "table not found"+arg;
+	case record_not_found: return "record not found"+arg;
+	case could_not_add_record: return "could not add record"+arg;
+	case could_not_delete_table: return "could not delete table"+arg;
+	case could_not_delete_database: return "could not delete database"+arg;
+	case could_not_create_table: return "could not create table"+arg;
+	case could_not_create_database: return "could not create database"+arg;
+	case no_columns: return "no columns were provided"+arg;
+	case zero_length_name: return "name cannot be zero"+arg;
+	case table_exists: return "table already exists"+arg;
+	case database_exists: return "database already exists"+arg;
+	case wrong_date_format: return "wrong date format"+arg;
+	case illegal_name: return "illegal name"+arg;
+	case none:
+		break;
 	}
 	return "";
 }
@@ -215,33 +229,31 @@ start:
 			input_handle();
 	} catch (Errors err) {
 		switch (err) {
-			case undefined_op:
-			case undefined_typ:
-			case invalid_token:
-			case wrong_syntax:
-			case database_not_chosen:
-			case database_not_found:
-			case table_not_found:
-			case record_not_found:
-			case could_not_add_record:
-			case could_not_delete_table:
-			case could_not_delete_database:
-			case could_not_create_table:
-			case could_not_create_database:
-			case no_columns:
-			case zero_length_name:
-			case keyword:
-			case table_exists:
-			case database_exists:
-			case wrong_date_format:
-				std::cout << "Error: " << error_message(err) << std::endl;
-				goto start;
-			case none:
-				goto start;
-				break;
+		case undefined_op:
+		case undefined_typ:
+		case invalid_token:
+		case wrong_syntax:
+		case database_not_chosen:
+		case database_not_found:
+		case table_not_found:
+		case record_not_found:
+		case could_not_add_record:
+		case could_not_delete_table:
+		case could_not_delete_database:
+		case could_not_create_table:
+		case could_not_create_database:
+		case no_columns:
+		case zero_length_name:
+		case keyword:
+		case table_exists:
+		case database_exists:
+		case wrong_date_format:
+		case illegal_name:
+			std::cout << "Error: " << error_message(err) << std::endl;
+			goto start;
+		case none:
+			goto start;
+			break;
 		}
-	}
-	catch (...) {
-		std::cout << "Some unusual catch up" << std::endl;
 	}
 }

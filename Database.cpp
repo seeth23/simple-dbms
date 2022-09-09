@@ -25,11 +25,20 @@ Result Database::create_table(std::map<std::string, ColumnType> cols, std::strin
 	return Result(true, none);
 }
 
-// TODO: think of how to format output. Should be the same for all the types, not chaotic.
 Result Database::show_table(std::string table_name) const {
-	auto t = this->get_table(table_name);
-	if (!t) return Result(false, table_not_found);
-	t->show_records();
+	if (!table_name.length()) {
+		for (auto t : this->m_tables) {
+			std::cout
+				<< "name: " << t->get_name() 
+				<< ";records: " << t->get_records_number()
+				<< ";columns: " << t->get_cols_number()
+			<< std::endl;
+		}
+	} else {
+		auto t = this->get_table(table_name);
+		if (!t) return Result(false, table_not_found);
+		t->show_records();
+	}
 	return Result(true, none);
 }
 

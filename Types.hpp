@@ -67,47 +67,47 @@ struct Field {
 	Field(Field &f) {
 		this->type = f.type;
 		switch (f.type) {
-			case text:
-				this->data.str = (char*)malloc(sizeof(char)*strlen(f.data.str));
-				if (!this->data.str) {
-					std::cerr << "Failed to alloc mem for .str" << std::endl;
-					exit(1);
-				}
-				strcpy(this->data.str, f.data.str);
-				break;
-			case number:
-				this->data.num = f.data.num;
-				break;
-			case money:
-				this->data.money = f.data.money;
-				break;
-			case date:
-				this->data.date = f.data.date;
-				break;
-			case undefined_type:
-				break;
+		case text:
+			this->data.str = (char*)malloc(sizeof(char)*strlen(f.data.str));
+			if (!this->data.str) {
+				std::cerr << "Failed to alloc mem for .str" << std::endl;
+				exit(1);
 			}
+			strcpy(this->data.str, f.data.str);
+			break;
+		case number:
+			this->data.num = f.data.num;
+			break;
+		case money:
+			this->data.money = f.data.money;
+			break;
+		case date:
+			this->data.date = f.data.date;
+			break;
+		case undefined_type:
+			break;
+		}
 	}
 
 	Field(ColumnType typ, const RecordData &rd)
 		: type(typ) {
 		switch (typ) {
-			case text:
-				this->data.str = (char*)malloc(sizeof(char)*strlen(rd.str));
-				if (!this->data.str) {
-					std::cerr << "Failed to alloc mem for .str" << std::endl;
-					exit(1);
-				}
-				strcpy(this->data.str, rd.str);
-			case number:
-				this->data.num = rd.num;
-			case money:
-				this->data.money = rd.money;
-			case date:
-				this->data.date = rd.date;
-			case undefined_type:
-				break;
+		case text:
+			this->data.str = (char*)malloc(sizeof(char)*strlen(rd.str));
+			if (!this->data.str) {
+				std::cerr << "Failed to alloc mem for .str" << std::endl;
+				exit(1);
 			}
+			strcpy(this->data.str, rd.str);
+		case number:
+			this->data.num = rd.num;
+		case money:
+			this->data.money = rd.money;
+		case date:
+			this->data.date = rd.date;
+		case undefined_type:
+			break;
+		}
 	}
 
 	~Field() {
