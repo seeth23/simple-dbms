@@ -6,6 +6,7 @@
 
 #include <vector>
 #include <map>
+#include <fstream>
 
 class Table {
 	std::vector<Record*> m_records;
@@ -21,6 +22,9 @@ public:
 	Result delete_record(size_t id);
 	void show_records() const;
 	int find_record_index(int id) const;
+
+	Result save(std::ofstream &ofst);
+	Result load(std::ifstream &ifst);
 
 	const std::string &get_name() const;
 	int get_cols_number() const;

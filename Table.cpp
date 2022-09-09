@@ -24,6 +24,37 @@ Table::~Table() {
 	}
 }
 
+Result Table::save(std::ofstream &ofst) {
+	// firstly save columns
+	size_t table_name_len = this->m_name.length();
+	ofst.write(reinterpret_cast<char*>(&table_name_len), sizeof table_name_len);
+	ofst.write(this->m_name.c_str(), table_name_len);
+	ofst.write(reinterpret_cast<char*>(&this->m_cols_number), sizeof this->m_cols_number);
+
+	for (size_t i = 0; i < this->m_cols_number; i++) {
+		size_t col_name_len = this->m_columns[i]->column_name.length();
+		ofst.write(reinterpret_cast<char*>(&col_name_len), sizeof col_name_len);
+		ofst.write(this->m_columns[i]->column_name.c_str(), col_name_len);
+		ofst.write(reinterpret_cast<char*>(&this->m_columns[i]->column_type), sizeof this->m_columns[i]->column_type);
+	}
+
+	ofst.write(reinterpret_cast<char*>(&this->m_records_number), sizeof this->m_records_number);
+	for (size_t j = 0;j < this->m_records_number; j++) {
+		this->m_records[j]->save(ofst);
+	}
+	return Result(true, none);
+}
+
+Result Table::load(std::ifstream &ifst) {
+	ifst.read(reinterpret_cast<char*>(&this->m_records_number), sizeof this->m_records_number);
+	for (size_t i=0;i<this->m_records_number;i++) {
+		Record *record = new Record(this->m_cols_number);
+		record->load(ifst);
+		this->m_records.push_back(record);
+	}
+	return Result(true, none);
+}
+
 static Result parse_date(std::string date, int *d, int *m, int *y) {
 	int day = (date[0]-48)*10+date[1]-48;
 	int month = (date[3]-48)*10+date[4]-48;

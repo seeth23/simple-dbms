@@ -5,18 +5,47 @@
 
 #include <stdexcept>
 
+
+Result DBMS::save_state() {
+	for (Database *db: this->m_databases) {
+		auto ofstrm = open_write("saves/"+db->name()+".ldb", std::ios::out);
+		db->save(ofstrm);
+		ofstrm.close();
+	}
+	return Result(true, none);
+}
+
+Result DBMS::load_state(const std::string &path) {
+	std::vector<std::string> paths = read_directory(path);
+	for (size_t i=0;i<paths.size();i++) {
+		std::ifstream ifst = open_read(paths[i], std::ios::in);
+		size_t database_name_len;	
+		ifst.read(reinterpret_cast<char*>(&database_name_len), sizeof database_name_len);
+		char *database_name = (char*)malloc(sizeof(char)*database_name_len);
+		if (!database_name_len) {
+			std::cerr << "Failed to alloc mem for .db_name" << std::endl;
+			exit(1);
+		}
+		ifst.read(database_name, database_name_len);
+		database_name[database_name_len] = 0;
+		this->create_database(std::string(database_name));
+
+		this->m_databases[i]->load(ifst);
+
+		ifst.close();
+	}
+	return Result(true, none);
+}
+
 DBMS::DBMS() {
-	this->m_file_sys = new FileSys();
 	this->m_parser = new Parser();
 	this->m_analyzer = new LexicalAnalyzer(); 
 
 	this->m_database_running = false;
 	this->m_current_database = nullptr;
-	this->m_id = 0;
 }
 
 DBMS::~DBMS() {
-	delete this->m_file_sys;
 	delete this->m_parser;
 	delete this->m_analyzer;
 }
@@ -46,11 +75,8 @@ Result DBMS::use_database(std::string database_name) {
 
 Result DBMS::add_record(std::string &table_name, std::vector<std::string> &vals) {
 	if (!this->m_current_database) return Result(false, database_not_chosen);
-	Table *t = this->m_current_database->get_table(table_name);
-	if (!t) return Result(false, table_not_found);
-	Result r = t->add_record(this->m_id, vals);
+	Result r = this->m_current_database->add_record(table_name, vals);
 	if (!r.res) return r;
-	this->m_id++;
 	return Result(true, none);
 }
 

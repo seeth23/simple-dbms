@@ -15,18 +15,16 @@
 #include <vector>
 #include <limits>
 #include <map>
+#include <fstream>
 
 class DBMS {
 	bool m_database_running;
 	Database *m_current_database;
 	std::vector<Database*> m_databases;
 
-	FileSys *m_file_sys;
 	Parser *m_parser;
 	LexicalAnalyzer *m_analyzer;
 
-	size_t m_id;
-	
 	void input_handle();
 	int find_database_index(std::string db) const;
 	
@@ -40,13 +38,14 @@ class DBMS {
 	Result create_database(std::string database_name);
 	Result delete_database(std::string database_name);
 	Result delete_record(std::string table_name, size_t id);
+
 public:
 	void run();
-	
+	Result save_state();
+	Result load_state(const std::string &path);
+
 	DBMS();
 	~DBMS();
 };
-
-
 
 #endif

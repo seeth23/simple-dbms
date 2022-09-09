@@ -8,11 +8,13 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <fstream>
 
 class Database {
 	std::vector<Table*> m_tables;
 	std::string m_name;
 	int m_tables_number;
+	size_t m_id;
 
 	int find_table_index(std::string table_name) const;
 public:
@@ -21,10 +23,16 @@ public:
 	Result delete_table(std::string table_name);
 	Result create_table(std::map<std::string, ColumnType> cols, std::string name);
 	Result show_table(std::string table_name) const;
+
+	Result add_record(const std::string &table_name, std::vector<std::string> &vals);
 	Table *get_table(std::string table_name) const;
 
 	const std::string &name() const;
 	const int &tables_number() const;
+	const int id() const;
+
+	Result save(std::ofstream &ofstr);
+	Result load(std::ifstream &ifst);
 };
 
 #endif

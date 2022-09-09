@@ -63,7 +63,7 @@ ColumnType LexicalAnalyzer::column_type(std::string &st) {
 // COLUMN_NAME:COLUMN_TYPE(no spaces)
 void LexicalAnalyzer::parse_columns(std::vector<std::string> tokens) {
 	this->m_table_signature.clear();
-	for (size_t i = 2; i < tokens.size()-1; i++) {
+	for (size_t i = 2;i < tokens.size()-1;i++) {
 		int delimeter_pos = tokens[i].find(':');
 		std::string key = tokens[i].substr(0, delimeter_pos);
 		
@@ -84,7 +84,7 @@ void LexicalAnalyzer::parse_columns(std::vector<std::string> tokens) {
 void LexicalAnalyzer::parse_values(std::vector<std::string> tokens) {
 	this->m_values.clear();
 	std::string v;
-	for (size_t i = 2; i < tokens.size()-1; i++) {
+	for (size_t i=2;i<tokens.size()-1;i++) {
 		if (!is_legal_name(tokens[i])) throw illegal_name;
 		if (tokens[i][0] == '\'') {
 			while (i < tokens.size()) {
@@ -107,6 +107,7 @@ Operations LexicalAnalyzer::parse_expression(std::vector<std::string> tokens) {
 
 	// check if table/database name is acceptable
 	Operations operation = command_type(tokens[0]);
+
 	if (operation != showtbl && operation != showdb) {
 		if (this->m_name.size() == 0)     throw zero_length_name;
 		if (is_keyword(this->m_name))     throw keyword;

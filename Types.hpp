@@ -7,7 +7,9 @@
 #include <iostream>
 
 #include <string.h>
+#include <fstream>
 
+#include "Error.hpp"
 
 struct Date {
 	size_t day;
@@ -19,6 +21,7 @@ struct Date {
 	std::string Display() const {
 		return std::to_string(day)+"/"+std::to_string(month)+"/"+std::to_string(year);
 	}
+	Date(std::string s) {} // TODO use date parser here as well
 };
 
 enum Operations {
@@ -63,6 +66,50 @@ union RecordData {
 struct Field {
 	ColumnType type;
 	RecordData data;
+
+	Field(ColumnType ct): type(ct) {}
+
+	Result load(std::ifstream &ifst) {
+		char *text_field = NULL;
+		char *date_field = NULL;
+		int number_field;
+		double money_field;
+		size_t text_field_len;
+		switch(type) {
+		case text:
+			ifst.read(reinterpret_cast<char*>(&text_field_len), sizeof text_field_len);
+			text_field = (char*)malloc(sizeof(char)*text_field_len);
+			if (!text_field) {
+				std::cerr << "Could not alloc memory for .text_field" << std::endl;
+				exit(1);
+			}
+			ifst.read(text_field, text_field_len);
+			data.str = text_field;
+			break;
+		case money:
+			ifst.read(reinterpret_cast<char*>(&data.money), sizeof(data.money));
+			break;
+		case number:
+			ifst.read(reinterpret_cast<char*>(&data.num), sizeof(data.num));
+			break;
+		case date:
+			ifst.read(reinterpret_cast<char*>(&text_field_len), sizeof text_field_len);
+			text_field = (char*)malloc(sizeof(char)*text_field_len);
+			if (!text_field) {
+				std::cerr << "Could not alloc memory for .text_field" << std::endl;
+				exit(1);
+			}
+			ifst.read(text_field, text_field_len);
+			data.date = Date(std::string(text_field));
+			free(text_field);
+			break;
+		case undefined_type: return Result(false, undefined_typ);
+		default:
+			std::cerr << "wtf" << std::endl;
+			exit(1);
+		}
+		return Result(true, none);
+	}
 
 	Field(Field &f) {
 		this->type = f.type;
@@ -124,12 +171,64 @@ struct Field {
 			break;
 		}
 	}
+
+	Result save(std::ofstream &ofst) {
+		ofst.write(reinterpret_cast<char*>(&type), sizeof type);
+		switch (type) {
+		case text: {
+			size_t strl = strlen(data.str)-1;
+			ofst.write(reinterpret_cast<char*>(&strl), sizeof strl);
+			ofst.write(data.str, strl);
+			break;
+		 }
+		case number:
+			ofst.write(reinterpret_cast<char*>(&data.num), sizeof data.num);
+			break;
+		case money:
+			ofst.write(reinterpret_cast<char*>(&data.money), sizeof data.money);
+			break;
+		case date: {
+			char *r = (char*)malloc(data.date.Display().length());
+			strcpy(r, data.date.Display().c_str());
+			size_t strl = strlen(r);
+			ofst.write(reinterpret_cast<char*>(&strl), sizeof strl);
+			ofst.write(r, strl);
+			free(r);
+			break;
+		 }
+		case undefined_type: throw undefined_typ;
+		}
+		return Result(true, none);
+	}
 };
 
 struct Record {
 	int id;
 	Field **fields;
 	int fields_number;
+
+	Record(int flds_num): id(0), fields(nullptr), fields_number(flds_num) {
+	}
+
+	Result save(std::ofstream &ofst) {
+		ofst.write(reinterpret_cast<char*>(&id), sizeof id);
+		for (size_t i = 0;i < fields_number; i++) {
+			fields[i]->save(ofst);
+		}
+		return Result(true, none);
+	}
+
+	Result load(std::ifstream &ifst) {
+		fields = new Field*[this->fields_number];
+		ifst.read(reinterpret_cast<char*>(&id), sizeof id);
+		for (size_t i = 0; i < this->fields_number; i++) {
+			ColumnType ct;
+			ifst.read(reinterpret_cast<char*>(&ct), sizeof(int));
+			fields[i] = new Field(ct);
+			fields[i]->load(ifst);
+		}
+		return Result(true, none);
+	}
 
 	Record(int id, Field **f, int f_number): id(id), fields_number(f_number) {
 		this->fields = new Field*[f_number];

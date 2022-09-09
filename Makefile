@@ -9,4 +9,4 @@ src=FileSys.cpp \
 flags = -Wall -g -std=c++17
 
 all:
-	g++ $(flags) $(src) -o main
+	clang++ $(flags) $(src) -o main

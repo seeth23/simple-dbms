@@ -2,3 +2,4 @@ documentation
 *.file
 main
 gcm.cache/*
+saves/
