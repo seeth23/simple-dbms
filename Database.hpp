@@ -19,6 +19,7 @@ class Database {
 	int find_table_index(std::string table_name) const;
 public:
 	Database(std::string db_name);
+	Database();
 	~Database();
 	Result delete_table(std::string table_name);
 	Result create_table(std::map<std::string, ColumnType> cols, std::string name);
@@ -27,11 +28,12 @@ public:
 	Result add_record(const std::string &table_name, std::vector<std::string> &vals);
 	Table *get_table(std::string table_name) const;
 
+	std::vector<Table*> get_tables();
+
 	const std::string &name() const;
 	const int &tables_number() const;
 	const int id() const;
 
-	Result save(std::ofstream &ofstr);
 	Result load(std::ifstream &ifst);
 };
 

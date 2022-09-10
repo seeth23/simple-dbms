@@ -68,49 +68,54 @@ struct Field {
 	RecordData data;
 
 	Field(ColumnType ct): type(ct) {}
+	Field() : type(undefined_type) {}
+
 
 	Result load(std::ifstream &ifst) {
-		char *text_field = NULL;
-		char *date_field = NULL;
-		int number_field;
-		double money_field;
-		size_t text_field_len;
-		switch(type) {
-		case text:
-			ifst.read(reinterpret_cast<char*>(&text_field_len), sizeof text_field_len);
-			text_field = (char*)malloc(sizeof(char)*text_field_len);
-			if (!text_field) {
-				std::cerr << "Could not alloc memory for .text_field" << std::endl;
+		ifst.read(reinterpret_cast<char*>(&type), 4);
+		switch (type) {
+		case text: {
+			int text_field_len;
+			ifst.read(reinterpret_cast<char*>(&text_field_len), 4);
+			char *text_field = (char*)malloc(sizeof(char)*text_field_len+1);
+			if (!text_field_len) {
+				std::cerr << "Error: tried to call malloc .txtfld for " << text_field_len << " bytes" << std::endl;
 				exit(1);
 			}
 			ifst.read(text_field, text_field_len);
+			text_field[text_field_len] = 0;
 			data.str = text_field;
 			break;
+		 }
 		case money:
-			ifst.read(reinterpret_cast<char*>(&data.money), sizeof(data.money));
+			ifst.read(reinterpret_cast<char*>(&data.money), sizeof data.money);
 			break;
 		case number:
-			ifst.read(reinterpret_cast<char*>(&data.num), sizeof(data.num));
+			ifst.read(reinterpret_cast<char*>(&data.num), 4);
 			break;
-		case date:
-			ifst.read(reinterpret_cast<char*>(&text_field_len), sizeof text_field_len);
-			text_field = (char*)malloc(sizeof(char)*text_field_len);
-			if (!text_field) {
-				std::cerr << "Could not alloc memory for .text_field" << std::endl;
+		case date: {
+			int text_field_len;
+			ifst.read(reinterpret_cast<char*>(&text_field_len), 4);
+			char *text_field = (char*)malloc(sizeof(char)*text_field_len+1);
+			if (!text_field_len) {
+				std::cerr << "Error: tried to call malloc .txtfld for " << text_field_len << " bytes" << std::endl;
 				exit(1);
 			}
 			ifst.read(text_field, text_field_len);
+			text_field[text_field_len] = 0;
 			data.date = Date(std::string(text_field));
 			free(text_field);
 			break;
-		case undefined_type: return Result(false, undefined_typ);
-		default:
-			std::cerr << "wtf" << std::endl;
+	 }
+		case undefined_type: 
+			std::cerr << "Undefined type was read" << std::endl;
 			exit(1);
 		}
+
+
 		return Result(true, none);
 	}
-
+	
 	Field(Field &f) {
 		this->type = f.type;
 		switch (f.type) {
@@ -171,35 +176,6 @@ struct Field {
 			break;
 		}
 	}
-
-	Result save(std::ofstream &ofst) {
-		ofst.write(reinterpret_cast<char*>(&type), sizeof type);
-		switch (type) {
-		case text: {
-			size_t strl = strlen(data.str)-1;
-			ofst.write(reinterpret_cast<char*>(&strl), sizeof strl);
-			ofst.write(data.str, strl);
-			break;
-		 }
-		case number:
-			ofst.write(reinterpret_cast<char*>(&data.num), sizeof data.num);
-			break;
-		case money:
-			ofst.write(reinterpret_cast<char*>(&data.money), sizeof data.money);
-			break;
-		case date: {
-			char *r = (char*)malloc(data.date.Display().length());
-			strcpy(r, data.date.Display().c_str());
-			size_t strl = strlen(r);
-			ofst.write(reinterpret_cast<char*>(&strl), sizeof strl);
-			ofst.write(r, strl);
-			free(r);
-			break;
-		 }
-		case undefined_type: throw undefined_typ;
-		}
-		return Result(true, none);
-	}
 };
 
 struct Record {
@@ -208,23 +184,13 @@ struct Record {
 	int fields_number;
 
 	Record(int flds_num): id(0), fields(nullptr), fields_number(flds_num) {
-	}
-
-	Result save(std::ofstream &ofst) {
-		ofst.write(reinterpret_cast<char*>(&id), sizeof id);
-		for (size_t i = 0;i < fields_number; i++) {
-			fields[i]->save(ofst);
-		}
-		return Result(true, none);
+		this->fields = new Field*[flds_num];
 	}
 
 	Result load(std::ifstream &ifst) {
-		fields = new Field*[this->fields_number];
-		ifst.read(reinterpret_cast<char*>(&id), sizeof id);
-		for (size_t i = 0; i < this->fields_number; i++) {
-			ColumnType ct;
-			ifst.read(reinterpret_cast<char*>(&ct), sizeof(int));
-			fields[i] = new Field(ct);
+		ifst.read(reinterpret_cast<char*>(&id), 4);	
+		for (size_t i = 0; i < fields_number; i++) {
+			fields[i] = new Field();
 			fields[i]->load(ifst);
 		}
 		return Result(true, none);

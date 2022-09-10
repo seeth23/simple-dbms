@@ -7,8 +7,16 @@ Database::Database(std::string db_name)
 {
 }
 
+Database::Database()
+	: m_name(""), m_tables_number(0), m_id(0)
+{}
+
 const int Database::id() const {
 	return this->m_id;
+}
+
+std::vector<Table*> Database::get_tables() {
+	return this->m_tables;
 }
 
 Result Database::add_record(const std::string &table_name, std::vector<std::string> &vals) {
@@ -20,61 +28,24 @@ Result Database::add_record(const std::string &table_name, std::vector<std::stri
 	return Result(true, none);
 }
 
-Result Database::save(std::ofstream &ofst) {
-	size_t database_name_len = this->m_name.length();
-	
-	ofst.write(reinterpret_cast<char*>(&database_name_len), sizeof database_name_len);
-	ofst.write(this->m_name.c_str(), database_name_len);
-	ofst.write(reinterpret_cast<char*>(&this->m_id), sizeof this->m_id);
-	ofst.write(reinterpret_cast<char*>(&this->m_tables_number), sizeof(this->m_tables_number));
-	for (auto table: this->m_tables) {
-		table->save(ofst);
-	}
-	ofst.close();
-	return Result(true, none);
-}
-
 Result Database::load(std::ifstream &ifst) {
-	ifst.read(reinterpret_cast<char*>(&this->m_id), sizeof this->m_id);
-	ifst.read(reinterpret_cast<char*>(&this->m_tables_number), sizeof this->m_tables_number);
-	for (size_t i=0;i<this->m_tables_number;i++) {
-// VAR
-		size_t table_name_len;
-		size_t cols_number;
-		char *table_name;
-		std::map<std::string, ColumnType> table_cols;
-// BEGIN
-		ifst.read(reinterpret_cast<char*>(&table_name_len), sizeof table_name_len);
-		table_name = (char*)malloc(sizeof(char)*table_name_len);
-		if (!table_name) {
-			std::cerr << "Could not alloc memory for .table_name" << std::endl;
-			exit(1);
-		}
-		std::cout << "table_name_len " << table_name_len << std::endl;
-		ifst.read(table_name, table_name_len);
-		table_name[table_name_len] = 0;
-		ifst.read(reinterpret_cast<char*>(&cols_number), sizeof cols_number);
-		
-		for (size_t i = 0; i < cols_number; i++) {
-			ColumnType ct;
-			size_t col_name_len;
-			ifst.read(reinterpret_cast<char*>(&col_name_len), sizeof col_name_len);
-			char *col_name = (char*)malloc(sizeof(char)*col_name_len);
-			if (!col_name) {
-				std::cerr << "Could not alloc memory for .col_name" << std::endl;
-				exit(1);
-			}
-			ifst.read(col_name, col_name_len);
-			ifst.read(reinterpret_cast<char*>(&ct), sizeof(int));
-			col_name[col_name_len] = 0;
-			table_cols.insert(std::pair<std::string, ColumnType>(std::string(col_name), ct));
-			free(col_name);
-		}
-		this->m_tables.push_back(new Table(table_cols, std::string(table_name)));
-		free(table_name);
-		this->m_tables[i]->load(ifst);
+	int database_name_len;	
+	ifst.read(reinterpret_cast<char*>(&database_name_len), 4);
+	char *database_name = (char*)malloc(sizeof(char)*database_name_len+1);
+	if (!database_name) {
+		std::cerr << "Could not alloc memory for .dbname" << std::endl;
+		exit(1);
 	}
-
+	ifst.read(database_name, database_name_len);
+	database_name[database_name_len] = 0;
+	this->m_name = std::string(database_name);
+	free(database_name);
+	ifst.read(reinterpret_cast<char*>(&this->m_id), 4);
+	ifst.read(reinterpret_cast<char*>(&this->m_tables_number), 4);
+	for (size_t i = 0; i < this->m_tables_number; i++) {
+		this->m_tables.push_back(new Table());
+		this->m_tables.back()->load(ifst);
+	}
 	return Result(true, none);
 }
 

@@ -3,35 +3,79 @@
 #include "Error.hpp"
 #include "LexicalAnalyzer.hpp"
 
-#include <stdexcept>
-
-
 Result DBMS::save_state() {
-	for (Database *db: this->m_databases) {
-		auto ofstrm = open_write("saves/"+db->name()+".ldb", std::ios::out);
-		db->save(ofstrm);
-		ofstrm.close();
+	for (auto db: this->m_databases) {
+		auto ofst = open_write("saves/"+db->name()+".ldb", std::ios::out);
+		int database_name_len = db->name().length();
+		// dbnamelen
+		ofst.write(reinterpret_cast<char*>(&database_name_len), 4);
+		// dbname
+		ofst.write(db->name().c_str(), database_name_len);
+		int id = db->id();
+		// db curr id
+		ofst.write(reinterpret_cast<char*>(&id), 4);
+		int tables_number = db->tables_number();
+		// tblscount
+		ofst.write(reinterpret_cast<char*>(&tables_number), 4);
+
+		for (auto tb: db->get_tables()) {
+			int table_name_len = tb->get_name().length();
+			// tblnamelen
+			ofst.write(reinterpret_cast<char*>(&table_name_len), 4);
+			// tblname
+			ofst.write(tb->get_name().c_str(), table_name_len);
+			int cols_number = tb->get_cols_number();
+			// colnumber
+			ofst.write(reinterpret_cast<char*>(&cols_number), 4);
+			for (auto col: tb->get_columns()) {
+				int column_name_len = col->column_name.length();
+				// colnamelen
+				ofst.write(reinterpret_cast<char*>(&column_name_len), 4);
+				// colname
+				ofst.write(col->column_name.c_str(), column_name_len);
+				// coltype
+				ofst.write(reinterpret_cast<char*>(&col->column_type), 4);
+			}
+			int records_number = tb->get_records_number();
+			ofst.write(reinterpret_cast<char*>(&records_number), 4);
+			for (auto rec: tb->get_records()) {
+				// recid
+				ofst.write(reinterpret_cast<char*>(&rec->id), 4);
+				for (size_t i = 0; i < rec->fields_number; i++) {
+					// recfieldtype
+					ofst.write(reinterpret_cast<char*>(&rec->fields[i]->type), 4);
+					// recitself
+					switch (rec->fields[i]->type) {
+					case text: {
+						int record_field_len = strlen(rec->fields[i]->data.str);
+						ofst.write(reinterpret_cast<char*>(&record_field_len), 4);
+						ofst.write(rec->fields[i]->data.str, record_field_len);
+						break;
+					 }
+					case number:
+						ofst.write(reinterpret_cast<char*>(&rec->fields[i]->data.num), 4);
+						break;
+					case money:
+						ofst.write(reinterpret_cast<char*>(&rec->fields[i]->data.money), sizeof(double));
+						break;
+					case date:
+						break;
+					case undefined_type: throw undefined_typ;
+					}
+				}
+			}
+		}
+		ofst.close();
 	}
 	return Result(true, none);
 }
 
 Result DBMS::load_state(const std::string &path) {
 	std::vector<std::string> paths = read_directory(path);
-	for (size_t i=0;i<paths.size();i++) {
+	for (size_t i = 0; i < paths.size(); i++) {
 		std::ifstream ifst = open_read(paths[i], std::ios::in);
-		size_t database_name_len;	
-		ifst.read(reinterpret_cast<char*>(&database_name_len), sizeof database_name_len);
-		char *database_name = (char*)malloc(sizeof(char)*database_name_len);
-		if (!database_name_len) {
-			std::cerr << "Failed to alloc mem for .db_name" << std::endl;
-			exit(1);
-		}
-		ifst.read(database_name, database_name_len);
-		database_name[database_name_len] = 0;
-		this->create_database(std::string(database_name));
-
-		this->m_databases[i]->load(ifst);
-
+		this->m_databases.push_back(new Database());
+		this->m_databases.back()->load(ifst);
 		ifst.close();
 	}
 	return Result(true, none);
