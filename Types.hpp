@@ -12,16 +12,17 @@
 #include "Error.hpp"
 
 struct Date {
-	size_t day;
-	size_t month;
-	size_t year; 
+	int day;
+	int month;
+	int year; 
 	Date(): day(0), month(0), year(0) {}
-	Date(size_t d, size_t m, size_t y) : day(d), month(m), year(y) {}
+	Date(int d, int m, int y) : day(d), month(m), year(y) {}
 	Date(const Date &d) { day = d.day; month = d.month; year = d.year; }
 	std::string Display() const {
-		return std::to_string(day)+"/"+std::to_string(month)+"/"+std::to_string(year);
+		std::string s_day = day < 9 ? "0"+std::to_string(day) : std::to_string(day);
+		std::string s_month = month < 9 ? "0"+std::to_string(month) : std::to_string(month);
+		return s_day+"/"+s_month+"/"+std::to_string(year);
 	}
-	Date(std::string s) {} // TODO use date parser here as well
 };
 
 enum Operations {
@@ -93,20 +94,11 @@ struct Field {
 		case number:
 			ifst.read(reinterpret_cast<char*>(&data.num), 4);
 			break;
-		case date: {
-			int text_field_len;
-			ifst.read(reinterpret_cast<char*>(&text_field_len), 4);
-			char *text_field = (char*)malloc(sizeof(char)*text_field_len+1);
-			if (!text_field_len) {
-				std::cerr << "Error: tried to call malloc .txtfld for " << text_field_len << " bytes" << std::endl;
-				exit(1);
-			}
-			ifst.read(text_field, text_field_len);
-			text_field[text_field_len] = 0;
-			data.date = Date(std::string(text_field));
-			free(text_field);
+		case date:
+			ifst.read(reinterpret_cast<char*>(&data.date.day), 4);
+			ifst.read(reinterpret_cast<char*>(&data.date.month), 4);
+			ifst.read(reinterpret_cast<char*>(&data.date.year), 4);
 			break;
-	 }
 		case undefined_type: 
 			std::cerr << "Undefined type was read" << std::endl;
 			exit(1);

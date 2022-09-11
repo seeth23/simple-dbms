@@ -41,9 +41,8 @@ class DBMS {
 
 public:
 	void run();
-	Result save_state();
 	Result load_state(const std::string &path);
-
+	Result save_state();
 	DBMS();
 	~DBMS();
 };

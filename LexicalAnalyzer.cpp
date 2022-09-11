@@ -128,7 +128,6 @@ Operations LexicalAnalyzer::parse_expression(std::vector<std::string> tokens) {
 	case deldb:
 	case deltbl:
 	case crtdb:
-		break;
 	case crttbl: /* parse key:value to create table. */
 		this->parse_columns(tokens);
 		break;

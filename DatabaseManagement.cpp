@@ -59,6 +59,9 @@ Result DBMS::save_state() {
 						ofst.write(reinterpret_cast<char*>(&rec->fields[i]->data.money), sizeof(double));
 						break;
 					case date:
+						ofst.write(reinterpret_cast<char*>(&rec->fields[i]->data.date.day), 4);
+						ofst.write(reinterpret_cast<char*>(&rec->fields[i]->data.date.month), 4);
+						ofst.write(reinterpret_cast<char*>(&rec->fields[i]->data.date.year), 4);
 						break;
 					case undefined_type: throw undefined_typ;
 					}
