@@ -3,7 +3,6 @@
 
 #include "Database.hpp"
 #include "FileSys.hpp"
-#include "Parser.hpp"
 #include "LexicalAnalyzer.hpp"
 
 #include "Error.hpp"
@@ -22,7 +21,6 @@ class DBMS {
 	Database *m_current_database;
 	std::vector<Database*> m_databases;
 
-	Parser *m_parser;
 	LexicalAnalyzer *m_analyzer;
 
 	void input_handle();

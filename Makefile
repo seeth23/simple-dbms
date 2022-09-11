@@ -1,5 +1,4 @@
 src=FileSys.cpp \
-		Parser.cpp \
 		DatabaseManagement.cpp \
 		LexicalAnalyzer.cpp \
 		Database.cpp \

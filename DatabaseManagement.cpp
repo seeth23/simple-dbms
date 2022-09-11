@@ -85,7 +85,6 @@ Result DBMS::load_state(const std::string &path) {
 }
 
 DBMS::DBMS() {
-	this->m_parser = new Parser();
 	this->m_analyzer = new LexicalAnalyzer(); 
 
 	this->m_database_running = false;
@@ -93,7 +92,6 @@ DBMS::DBMS() {
 }
 
 DBMS::~DBMS() {
-	delete this->m_parser;
 	delete this->m_analyzer;
 }
 
